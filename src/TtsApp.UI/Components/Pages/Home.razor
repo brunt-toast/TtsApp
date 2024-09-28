@@ -1,0 +1,156 @@
+﻿@page "/"
+@using System.Speech.Synthesis
+@using CommunityToolkit.Maui.Storage
+@using TtsApp.Engine
+@using ISnackbar = MudBlazor.ISnackbar
+
+@inject ISnackbar SnackBar
+
+<MudGrid Spacing="5">
+    <MudItem xs="6">
+        <MudSelect @bind-Value="_voiceGender"
+                   Variant="Variant.Text"
+                   Label="@("Voice")"
+                   Placeholder="@("Unspecified")">
+            @foreach (var value in Enum.GetValues<VoiceGender>())
+            {
+                <MudSelectItem Value="value">@value</MudSelectItem>
+            }
+        </MudSelect>
+    </MudItem>
+    <MudItem xs="6">
+        <MudSelect @bind-Value="_voiceAge"
+                   Variant="Variant.Text"
+                   Label="@("Age")"
+                   Placeholder="@("Unspecified")">
+            @foreach (var value in Enum.GetValues<VoiceAge>())
+            {
+                <MudSelectItem Value="value">
+                    @value
+                </MudSelectItem>
+            }
+        </MudSelect>
+    </MudItem>
+    <MudItem xs="6">
+        <MudSlider Variant="Variant.Filled" T="int" @bind-Value="_volume" ValueLabel="true" Min="0" Max="100">Volume</MudSlider>
+    </MudItem>
+    <MudItem xs="6">
+        <MudSlider T="int" @bind-Value="_rate" ValueLabel="true" Min="-10" Max="10">Rate of speech</MudSlider>
+    </MudItem>
+    <MudItem xs="4">
+        <MudPaper>
+            <MudList T="string">
+                @foreach (string file in _queuedFiles)
+                {
+                    <MudListItem Icon="@Icons.Material.Filled.FileCopy">
+                        @file
+                        <MudIconButton Style="@("position: absolute; top: 0; right: 0;")" Icon="@Icons.Material.Filled.Delete" aria-label="delete" OnClick="@(() => _queuedFiles.Remove(file))" />
+                    </MudListItem>
+                }
+            </MudList>
+        </MudPaper>
+
+        <MudButton Class="@("mt-1")" Variant="Variant.Filled"
+                   Color="Color.Primary"
+                   OnClick="AddInputFile"
+                   StartIcon="@Icons.Material.Filled.FileOpen">
+            Add files
+        </MudButton>
+    </MudItem>
+    <MudItem xs="4">
+        <MudPaper Class="@("p-2")">
+            Output to: @_outputPath
+        </MudPaper>
+        <MudButton Class="@("mt-1")" Variant="Variant.Filled"
+                   Color="Color.Primary"
+                   StartIcon="@Icons.Material.Filled.FolderOpen"
+                   OnClick="ChooseOutputFolder">
+            Choose folder
+        </MudButton>
+    </MudItem>
+    <MudItem xs="4">
+        <MudPaper>
+            <MudList T="string">
+                @foreach (string file in _processedFiles)
+                {
+                    <MudListItem Icon="@Icons.Material.Filled.Speaker">
+                        @file
+                    </MudListItem>
+                }
+            </MudList>
+        </MudPaper>
+        <MudButton Class="@("mt-1")" Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Refresh" OnClick="ProcessFiles">
+            Process
+        </MudButton>
+        <MudButton Class="@("mt-1")" Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Clear" OnClick="@(() => _ = _processedFiles.RemoveAll(x => true))">
+            Clear
+        </MudButton>
+    </MudItem>
+</MudGrid>
+
+@code
+{
+    private VoiceGender _voiceGender;
+    private VoiceAge _voiceAge;
+    private int _volume = 100;
+    private int _rate;
+
+    private readonly List<string> _queuedFiles = new();
+    private async Task AddInputFile()
+    {
+        var result = await FilePicker.Default.PickMultipleAsync(PickOptions.Default);
+        _queuedFiles.AddRange(result.Select(x => x.FullPath));
+    }
+
+    private string _outputPath;
+    async Task ChooseOutputFolder()
+    {
+        var result = await FolderPicker.Default.PickAsync();
+        if (result.IsSuccessful)
+        {
+            _outputPath = result.Folder.Path;
+            SnackBar.Add($"Set output to {result.Folder.Name}", Severity.Info);
+        }
+        else
+        {
+            SnackBar.Add("Failed to set output folder", Severity.Error);
+        }
+    }
+
+    private readonly List<string> _processedFiles = new();
+    private async void ProcessFiles()
+    {
+        if (!Directory.Exists(_outputPath))
+        {
+            SnackBar.Add("Output folder does not exist!", Severity.Error);
+            return;
+        }
+
+        var engine = new TtsEngine
+            {
+                SpeechRate = _rate,
+                Volume = _volume,
+                VoiceGender = _voiceGender,
+                VoiceAge = _voiceAge
+            };
+
+        foreach (var file in _queuedFiles.ToList())
+        {
+            if (!File.Exists(file))
+            {
+                SnackBar.Add($"File {file} does not exist - maybe it was deleted?", Severity.Error);
+                continue;
+            }
+
+            string outputPath = Path.Join(_outputPath, Path.GetFileNameWithoutExtension(file) + ".wav");
+            await engine.ConvertFileAsync(file, outputPath);
+            _queuedFiles.Remove(file);
+            _processedFiles.Add($"{Path.GetFileNameWithoutExtension(file)}.wav");
+            SnackBar.Add($"Finished processing ${Path.GetFileName(file)}", Severity.Info);
+            StateHasChanged();
+        }
+
+        SnackBar.Add("Finished processing all files", Severity.Success);
+        StateHasChanged();
+    }
+}
