@@ -9,6 +9,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TtsApp.Engine", "TtsApp.Eng
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TtsApp.Tests", "TtsApp.Tests\TtsApp.Tests.csproj", "{BB21E694-B98F-4302-986A-E63FB1B79F25}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TtsApp.Console", "TtsApp.Console\TtsApp.Console.csproj", "{E10539C4-5C6D-4290-A762-86CEF1906996}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -29,6 +31,10 @@ Global
 		{BB21E694-B98F-4302-986A-E63FB1B79F25}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{BB21E694-B98F-4302-986A-E63FB1B79F25}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{BB21E694-B98F-4302-986A-E63FB1B79F25}.Release|Any CPU.Build.0 = Release|Any CPU
+		{E10539C4-5C6D-4290-A762-86CEF1906996}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E10539C4-5C6D-4290-A762-86CEF1906996}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E10539C4-5C6D-4290-A762-86CEF1906996}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E10539C4-5C6D-4290-A762-86CEF1906996}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
